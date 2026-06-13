@@ -1,0 +1,50 @@
+# nats-values.yaml
+config:
+  # Cluster configuration for HA
+  cluster:
+    enabled: true
+    replicas: 3
+
+  # Enable JetStream
+  jetstream:
+    enabled: true
+
+    # Storage configuration
+    memoryStore:
+      enabled: true
+      # Reducido: debe quedar por debajo del límite de memoria del contenedor (1Gi)
+      maxSize: 256Mi
+    fileStore:
+      enabled: true
+      pvc:
+        enabled: true
+        # Reducido para el lab (3 réplicas x 5Gi = 15Gi en disco del host)
+        size: 5Gi
+        storageClassName: local-path
+
+  # Enable monitoring endpoint for Prometheus exporter
+  monitor:
+    enabled: true
+
+container:
+  image:
+    repository: nats
+    # Última versión estable en Docker Hub (antes: 2.14.0-alpine)
+    tag: 2.14.2-alpine
+
+  # Resource limits adaptados al nodo de 1 host (10 CPU / ~7.8Gi, compartido con argocd)
+  # Total requests: ~300m CPU / 768Mi RAM | Total límites: 1.5 CPU / 3Gi RAM
+  merge:
+    resources:
+      requests:
+        cpu: 100m
+        memory: 256Mi
+      limits:
+        cpu: 500m
+        memory: 1Gi
+
+# Enable monitoring
+promExporter:
+  enabled: true
+  podMonitor:
+    enabled: true

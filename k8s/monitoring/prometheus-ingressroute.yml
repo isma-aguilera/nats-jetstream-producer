@@ -1,0 +1,41 @@
+# prometheus-ingressroute.yml
+# IngressRoute de Traefik para Prometheus.
+# Fuerza http->https para que el navegador use HTTP/2 (websecure) y evite el
+# bug de "Transfer-Encoding: chunked" sobre HTTP/1.1 que dejaba la pestaña cargando.
+# Acceso: https://prometheus.k8s.orb.local  (cert por defecto de Traefik / self-signed)
+# (reutiliza el Middleware "redirect-https" definido en grafana-ingressroute.yml)
+---
+# Entrypoint web (HTTP): solo redirige a HTTPS
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: prometheus-web
+  namespace: monitoring
+spec:
+  entryPoints:
+    - web
+  routes:
+    - kind: Rule
+      match: Host(`prometheus.k8s.orb.local`)
+      middlewares:
+        - name: redirect-https
+      services:
+        - name: kube-prometheus-stack-prometheus
+          port: 9090
+---
+# Entrypoint websecure (HTTPS/HTTP2): sirve la app
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: prometheus
+  namespace: monitoring
+spec:
+  entryPoints:
+    - websecure
+  routes:
+    - kind: Rule
+      match: Host(`prometheus.k8s.orb.local`)
+      services:
+        - name: kube-prometheus-stack-prometheus
+          port: 9090
+  tls: {}

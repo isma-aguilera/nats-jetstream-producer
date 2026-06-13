@@ -1,0 +1,80 @@
+# kube-prometheus-stack-values.yaml
+# Instalación ligera para lab en 1 nodo (OrbStack, ~7.8Gi RAM compartido con argocd/NATS)
+
+# --- Prometheus ---
+prometheus:
+  prometheusSpec:
+    # CLAVE: descubrir PodMonitors/ServiceMonitors aunque NO lleven el label de release.
+    # Sin esto, Prometheus ignoraría el PodMonitor que crea el chart de NATS.
+    podMonitorSelectorNilUsesHelmValues: false
+    serviceMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    probeSelectorNilUsesHelmValues: false
+
+    # Retención corta para el lab
+    retention: 2d
+
+    # Almacenamiento con la StorageClass real del cluster
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+    resources:
+      requests:
+        cpu: 200m
+        memory: 320Mi
+      limits:
+        # CPU abundante en el nodo (10 cores); límite alto para evitar throttling de queries
+        cpu: "2"
+        memory: 768Mi
+
+# --- Alertmanager: desactivado en el lab (no se usa) para liberar RAM ---
+alertmanager:
+  enabled: false
+
+# --- Grafana (útil para visualizar métricas de NATS) ---
+grafana:
+  adminPassword: admin   # lab only; cambia esto si lo expones
+  resources:
+    requests:
+      cpu: 100m
+      memory: 192Mi
+    limits:
+      # Subido: 300m causaba CPU throttling severo al servir los bundles JS (spinner eterno)
+      cpu: "1"
+      memory: 512Mi
+
+# --- Operator ---
+prometheusOperator:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 100Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# --- kube-state-metrics ---
+kube-state-metrics:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+# --- node-exporter ---
+prometheus-node-exporter:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 32Mi
+    limits:
+      cpu: 100m
+      memory: 64Mi
