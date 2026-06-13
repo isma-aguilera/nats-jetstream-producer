@@ -1,0 +1,22 @@
+# Compiled binaries
+/bin/
+/dist/
+*.exe
+nats-jetstream-producer
+
+# Secrets / credentials — never commit these
+.env
+.env.*
+!.env.example
+*.creds
+*.nk
+*.pem
+*.key
+
+# Go
+vendor/
+
+# Editor / OS
+.idea/
+.vscode/
+.DS_Store
